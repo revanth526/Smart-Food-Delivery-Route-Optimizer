@@ -1,0 +1,10 @@
+{
+  "name": "smart-food-delivery-root",
+  "version": "1.0.0",
+  "description": "Root runner scripts for Smart Food Delivery Optimizer",
+  "scripts": {
+    "start-backend": "npm run start --prefix node-backend",
+    "start-frontend": "npm run dev --prefix frontend",
+    "install-all": "npm install --prefix node-backend && npm install --prefix frontend"
+  }
+}
