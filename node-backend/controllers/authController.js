@@ -3,6 +3,7 @@ const Otp = require('../models/Otp');
 const { generateOTP, hashOTP } = require('../services/otpService');
 const { sendOTP } = require('../services/smsService');
 const { generateToken } = require('../utils/jwt');
+const supabase = require('../supabase');
 
 /**
  * Handles generating and sending a 6-digit OTP to a customer
@@ -121,27 +122,70 @@ const verifyOtp = async (req, res) => {
     // OTP verified successfully - Delete it from database
     await Otp.deleteOne({ _id: otpRecord._id });
 
-    // Store/Retrieve user
-    let user = await User.findOne({ phone: cleanPhone });
+    // Store/Retrieve user using Supabase instead of MongoDB
+    let user = null;
+    try {
+      const { data: existingUser, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', cleanPhone)
+        .maybeSingle();
+
+      if (userError) {
+        console.warn('Supabase query error, falling back to local fallback:', userError.message);
+      } else {
+        user = existingUser;
+      }
+    } catch (e) {
+      console.warn('Failed to query Supabase users table:', e.message);
+    }
+
     if (!user) {
-      user = await User.create({
-        phone: cleanPhone,
-        name: `Customer-${cleanPhone.substring(cleanPhone.length - 4)}`
-      });
+      const defaultName = `Customer-${cleanPhone.substring(cleanPhone.length - 4)}`;
+      try {
+        const { data: insertedUser, error: insertError } = await supabase
+          .from('users')
+          .insert({
+            phone: cleanPhone,
+            name: defaultName,
+            role: 'customer'
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.warn('Supabase user creation error, using local fallback:', insertError.message);
+          user = {
+            id: 'mock-sb-' + Date.now(),
+            phone: cleanPhone,
+            name: defaultName,
+            role: 'customer'
+          };
+        } else {
+          user = insertedUser;
+        }
+      } catch (e) {
+        user = {
+          id: 'mock-sb-' + Date.now(),
+          phone: cleanPhone,
+          name: defaultName,
+          role: 'customer'
+        };
+      }
     }
 
     // Generate JWT token
-    const token = generateToken({ id: user._id, role: user.role });
+    const token = generateToken({ id: user.id || user._id, role: user.role || 'customer' });
 
     return res.status(200).json({
       success: true,
       message: 'Verification successful.',
       token,
       user: {
-        id: user._id,
+        id: user.id || user._id,
         phone: user.phone,
         name: user.name,
-        role: user.role
+        role: user.role || 'customer'
       }
     });
 

@@ -86,7 +86,7 @@ const Login = () => {
         navigate('/');
       }, 1000);
     } catch (err) {
-      const errMsg = err.response?.data?.message || 'Verification failed. Try matching the active database OTP.';
+      const errMsg = err.response?.data?.message || 'Error connecting to auth service. Ensure Node backend is running.';
       setErrorMsg(errMsg);
       setMessage(null);
     }
@@ -125,28 +125,9 @@ const Login = () => {
         navigate('/admin/dashboard');
       }, 1000);
     } catch (err) {
-      // Offline Sandbox Fallback: allow login using default credentials
-      if (emailInput.trim() === 'rkrevanth2456@gmail.com' && passwordInput === 'Salaar@111') {
-        setErrorMsg(null);
-        setMessage('🔑 Credentials accepted (Offline Sandbox)! Opening Admin console...');
-        
-        localStorage.setItem('user_session', JSON.stringify({
-          token: 'simulated_admin_jwt_token',
-          role: 'admin',
-          email: 'rkrevanth2456@gmail.com'
-        }));
-        
-        setIsAuthenticated(true);
-        setRole('admin');
-        
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 1000);
-      } else {
-        const errMsg = err.response?.data?.message || 'Access denied. Invalid secure admin credentials.';
-        setErrorMsg(errMsg);
-        setMessage(null);
-      }
+      const errMsg = err.response?.data?.message || 'Error connecting to auth service. Ensure Node backend is running.';
+      setErrorMsg(errMsg);
+      setMessage(null);
     }
   };
 

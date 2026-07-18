@@ -2,6 +2,7 @@ const Admin = require('../models/Admin');
 const Order = require('../models/Order');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/jwt');
+const supabase = require('../supabase');
 
 /**
  * Handle Admin Authentication
@@ -13,8 +14,29 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
-    // Lookup administrator
-    const admin = await Admin.findOne({ email });
+    // Lookup administrator in Supabase
+    let admin = null;
+    try {
+      const { data: existingAdmin, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (adminError) {
+        console.warn('Supabase admins query error, checking local db fallback:', adminError.message);
+      } else {
+        admin = existingAdmin;
+      }
+    } catch (e) {
+      console.warn('Failed to query Supabase admins table:', e.message);
+    }
+
+    // Fallback: check local MongoDB collection if not found in Supabase
+    if (!admin) {
+      admin = await Admin.findOne({ email });
+    }
+
     if (!admin) {
       return res.status(401).json({ success: false, message: 'Invalid administrative email or password.' });
     }
@@ -26,16 +48,16 @@ const login = async (req, res) => {
     }
 
     // Sign admin token
-    const token = generateToken({ id: admin._id, role: admin.role });
+    const token = generateToken({ id: admin.id || admin._id, role: admin.role || 'admin' });
 
     return res.status(200).json({
       success: true,
       message: 'Admin authenticated successfully.',
       token,
       admin: {
-        id: admin._id,
+        id: admin.id || admin._id,
         email: admin.email,
-        role: admin.role
+        role: admin.role || 'admin'
       }
     });
 
