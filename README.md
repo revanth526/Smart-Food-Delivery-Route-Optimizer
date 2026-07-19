@@ -395,7 +395,7 @@ This project demonstrates:
 
 **Your Name**
 
-GitHub: https://github.com/yourusername
+GitHub: https://github.com/revanth526
 
 LinkedIn: https://linkedin.com/in/yourprofile
 
