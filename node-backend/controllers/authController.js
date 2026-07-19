@@ -36,22 +36,22 @@ const sendOtp = async (req, res) => {
     const expiration = new Date(Date.now() + 5 * 60 * 1000); // 5-minute expiration time
 
     if (existingOtp) {
-      // Update existing record
-      existingOtp.otpHash = hashed;
-      existingOtp.expiresAt = expiration;
-      existingOtp.attempts = 0; // Reset verification attempt counter
-      existingOtp.lastSentAt = new Date();
-      await existingOtp.save();
-    } else {
-      // Create new record
-      await Otp.create({
-        phone: cleanPhone,
-        otpHash: hashed,
-        expiresAt: expiration,
-        attempts: 0,
-        lastSentAt: new Date()
-      });
-    }
+  existingOtp.otp = rawOtp;        // <-- ADD THIS
+  existingOtp.otpHash = hashed;
+  existingOtp.expiresAt = expiration;
+  existingOtp.attempts = 0;
+  existingOtp.lastSentAt = new Date();
+  await existingOtp.save();
+} else {
+  await Otp.create({
+    phone: cleanPhone,
+    otp: rawOtp,                   // <-- ADD THIS
+    otpHash: hashed,
+    expiresAt: expiration,
+    attempts: 0,
+    lastSentAt: new Date()
+  });
+}
 
     // Always print OTP in server console for inspection
     console.log(`\n==================================================`);
