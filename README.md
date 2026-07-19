@@ -399,7 +399,7 @@ Deployment Link: https://smart-food-delivery-route-optimizer.vercel.app/login
 
 GitHub: https://github.com/revanth526
 
-LinkedIn: https://linkedin.com/in/yourprofile
+LinkedIn: https://www.linkedin.com/in/revanthkumar200670/
 
 ---
 
